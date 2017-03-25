@@ -36,7 +36,7 @@ look like this:
 
     list of str or int
 
-Is the ``int`` *in* the list or *out* of it?
+Is the ``int`` *in* the `list` or *out* of it?
 
 Moreover, there are no examples of how to handle complex tuples,
 dictionary key and value types, callable signatures, or how to specify
@@ -46,8 +46,7 @@ The upshot is that with this much ambiguity, programmatic type checking
 is pretty unreliable. To improve the situation, some IDEs like PyCharm
 have proposed `their own
 convention <https://www.jetbrains.com/help/pycharm/2016.1/type-hinting-in-pycharm.html>`__
-which is a step forward, but do you really want to make your modules
-IDE-specific?
+which is a step forward, but this requires tying your code to a specific IDE.
 
 Enter PEP 484
 -------------
@@ -69,13 +68,13 @@ This is where we need to stop and clarify the difference between type
 annotations and type checking. With the addition of pep484, python 3.5
 gained two things:
 
-1. a standard for describing types (e.g. ``Union[str, List[str]]``.)
-2. syntax support for annotating function arguments and return values
+1. A standard for describing types (e.g. ``Union[str, List[str]]``.)
+2. Syntax support for annotating function arguments and return values
    with type descriptions
 
 Noticeably lacking here is actual *type checking*, i.e. inspection of
 code to enforce that arguments and assignments match their declared
-types. The developers of python left that role be filled by third-party
+types. The developers of python left that role to be filled by third-party
 tools.
 
 Back to python 2.x: A standard for describing types in unambiguous terms

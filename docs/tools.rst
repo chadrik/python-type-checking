@@ -26,7 +26,7 @@ functions in python 2.7 (more info
 .. code:: python
 
     def doit(inputs, enabled):
-        # (Union[str, List[str]],  Dict[str, bool]) -> Iterable[str]
+        # type: (Union[str, List[str]],  Dict[str, bool]) -> Iterable[str]
         "Do something with those inputs"
         ...
 
