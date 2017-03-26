@@ -1,11 +1,13 @@
 from typing import AnyStr, Generic, List, Dict, Tuple, Sequence, Set, Type, TypeVar, Pattern, Iterable, Container, Union
 
 import re
-from collections import OrderedDict, deque
+from collections import OrderedDict, deque, defaultdict
 # created a local copy of collections to test if providing a .pyi would help
 # with OrderedDict issues.  it did not.
 # from mycollections import OrderedDict
 
+# strings
+# =======
 
 def bytestring_test(s):
     # type: (str) -> str
@@ -20,7 +22,8 @@ def unicodestring_test(s):
     # type: (unicode) -> unicode
     return s
 
-unicodestring_test('x')                 # problem detected: mypy, pycharm
+# pycharm allows str for unicode?
+unicodestring_test('x')                 # problem detected: mypy
 unicodestring_test(u'x')                # OK!
 unicodestring_test(1)                   # problem detected: mypy, pycharm
 
@@ -34,12 +37,18 @@ anystr_test(u'x')                       # OK!
 anystr_test(1)                          # problem detected: mypy, pycharm
 
 
-# Builtins
-# --------
+# Builtin Generics
+# ================
+
+# List
+# ----
 
 l = list()  # type: List[int]
 l.append(1)                             # OK!
 l.append('x')                           # problem detected: mypy, pycharm
+
+# Set
+# ---
 
 l = set()  # type: Set[int]
 l.add(1)                                # OK!
@@ -77,18 +86,18 @@ def regex_test(arg):
     return
 
 regex_test(re.compile(r'foo'))
-regex_test(False)                        # problem detected: mypy
+regex_test(False)                        # problem detected: mypy, pycharm
 
 
-# Dict[]
-# ------
+# Dict
+# ----
 
 def dict_test(arg):
     # type: (Dict[str, int]) -> None
     return
 
 dict_test(2)                             # problem detected: mypy, pycharm
-dict_test(dict(foo='bar'))               # problem detected: mypy
+dict_test(dict(foo='bar'))               # problem detected: mypy, pycharm
 dict_test(dict(foo=2))                   # OK!
 dict_test({'foo': 'bar'})                # problem detected: mypy, pycharm
 dict_test({'foo': 2})                    # OK!
@@ -96,36 +105,46 @@ arg = {'foo': 'bar'}
 dict_test(arg)                           # problem detected: mypy, pycharm
 
 
-# OrderedDict[]
-# -------------
-
-def odict_test(arg):
-    # type: (OrderedDict[str, int]) -> None
-    return
-
-odict_test(2)                            # problem detected: mypy
-odict_test(OrderedDict(foo='bar'))       # problem detected: mypy
-odict_test(OrderedDict(foo=2))           # OK!
-odict_test(OrderedDict({'foo': 'bar'}))  # problem detected: mypy
-odict_test(OrderedDict({'foo': 2}))      # OK!
-arg = OrderedDict({'foo': 'bar'})        # OK!
-odict_test(arg)                          # problem detected: mypy
-
-
-l = deque()  # type: deque[int]
-l.append(1)                             # OK!
-l.append('x')                           # problem detected: mypy
-
-
-# Tuple[]
-# -------
+# Tuple
+# -----
 
 def tuple_test(arg1, arg2):
     # type: (Tuple[str, int], Tuple[int, ...]) -> None
     return
 
-tuple_test(('foo', 2), (1, 2, 3))       # OK!
+tuple_test(('foo', 2), (1, 2, 3))       # OK! problem incorrectly detected: pycharm
 tuple_test((2, 2), ('foo', 'foo'))      # problem detected: mypy, pycharm
+
+
+# Other Generics
+# ==============
+
+# OrderedDict
+# -----------
+
+def odict_test(arg):
+    # type: (OrderedDict[str, int]) -> None
+    return
+
+odict_test(2)                            # problem detected: mypy, pycharm
+odict_test(OrderedDict(foo='bar'))       # problem detected: mypy
+odict_test(OrderedDict(foo=2))           # OK!
+odict_test(OrderedDict({'foo': 'bar'}))  # problem detected: mypy
+odict_test(OrderedDict({'foo': 2}))      # OK!
+arg = OrderedDict({'foo': 'bar'})
+odict_test(arg)                          # problem detected: mypy
+arg2 = OrderedDict({'foo': 'bar'})       # type: OrderedDict[str, str]
+odict_test(arg2)                         # problem detected: mypy, pycharm
+arg2['this'] = 'that'                    # OK!
+arg2['this'] = 1                         # problem detected: mypy
+
+# deque
+# -----
+
+l = deque()  # type: deque[int]
+l.append(1)                             # OK!
+l.append('x')                           # problem detected: mypy
+
 
 # Custom Generic
 # --------------
@@ -150,24 +169,34 @@ class Stack(Generic[T]):
         return not self.items
 
 stack = Stack()  # type: Stack[int]
-stack.push('x')                          # problem detected: mypy
+stack.push(1)
+stack.push('x')                          # problem detected: mypy, pycharm
 
 
 # Class discovery
-# ---------------
+# ===============
 
-# import othermodule
-def external_test(arg):
+def external_test1(arg):
     # type: (othermodule.ExternalType) -> None
     return
 
+external_test1(2)                       # mypy nor pycharm can locate othermodule
 
-external_test(2)                       # problem detected: pycharm (mypy can't locate othermodule)
-# external_test(othermodule.ExternalType())
 
+import othermodule2
+
+def external_test2(typ):
+    # type: (othermodule2.ExternalType2) -> None
+    print(typ)
+    return
+
+external_test2(2)                       # problem detected: mypy
+ot = othermodule2.ExternalType()
+external_test2(ot)                       # OK!
 
 # Type alias
-# ----------
+# ==========
+
 # https://youtrack.jetbrains.com/issue/PY-19807
 Number = Union[int, float]
 
@@ -176,11 +205,11 @@ def type_alias_test(x):
     # type: (Number) -> Number
     return x + 1
 
-type_alias_test('2')                   # problem detected: mypy
+type_alias_test('2')                   # problem detected: mypy, pycharm
 
 
-# Type[]
-# ------
+# Type
+# ====
 
 class Foo(object):
 
@@ -194,11 +223,11 @@ def get_class_type():
     return Foo
 
 get_class_type().bar()                 # OK!
-get_class_type().bad()                 # problem detected: mypy
+get_class_type().bad()                 # problem detected: mypy, pycharm
 
 
 # Star Args
-# ---------
+# =========
 
 def multiline_test(arg1,  # type: str
                    arg2,  # type: List[int]
@@ -209,7 +238,7 @@ def multiline_test(arg1,  # type: str
 
 multiline_test('foo', [1]).format()    # OK!
 multiline_test('foo', 'bar')           # problem detected: mypy, pycharm
-multiline_test('foo', [1], [1, 2, 3])  # OK! problem incorrectly detected: pycharm
+multiline_test('foo', [1], [1, 2, 3])  # OK!
 
 
 def with_args1(*args):
